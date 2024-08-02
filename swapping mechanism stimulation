@@ -1,0 +1,71 @@
+import random
+import time
+
+class Process:
+    def __init__(self, pid, memory_required, cpu_required, duration):
+        self.pid = pid
+        self.memory_required = memory_required
+        self.cpu_required = cpu_required
+        self.duration = duration
+        self.in_memory = False
+
+class Memory:
+    def __init__(self, total_memory, total_cpu):
+        self.total_memory = total_memory
+        self.total_cpu = total_cpu
+        self.available_memory = total_memory
+        self.available_cpu = total_cpu
+        self.processes = []
+
+    def load_process(self, process):
+        if self.available_memory >= process.memory_required and self.available_cpu >= process.cpu_required:
+            process.in_memory = True
+            self.available_memory -= process.memory_required
+            self.available_cpu -= process.cpu_required
+            self.processes.append(process)
+            print(f"Process {process.pid} loaded into memory.")
+        else:
+            print(f"Not enough resources to load process {process.pid}.")
+            self.swap_out(process.memory_required, process.cpu_required)
+            if self.available_memory >= process.memory_required and self.available_cpu >= process.cpu_required:
+                self.load_process(process)
+
+    def swap_out(self, memory_needed, cpu_needed):
+        while self.available_memory < memory_needed or self.available_cpu < cpu_needed:
+            process = self.processes.pop(0)
+            process.in_memory = False
+            self.available_memory += process.memory_required
+            self.available_cpu += process.cpu_required
+            print(f"Process {process.pid} swapped out of memory.")
+
+    def decrement_durations(self):
+        for process in self.processes:
+            process.duration -= 1
+        self.processes = [process for process in self.processes if process.duration > 0]
+
+    def display_memory_status(self):
+        print(f"Total Memory: {self.total_memory}")
+        print(f"Available Memory: {self.available_memory}")
+        print(f"Total CPU: {self.total_cpu}")
+        print(f"Available CPU: {self.available_cpu}")
+        print("Processes in memory:")
+        for process in self.processes:
+            print(f" - Process {process.pid} (Memory Required: {process.memory_required}, CPU Required: {process.cpu_required}, Duration: {process.duration})")
+        print()
+
+def simulate_memory_swapping():
+    total_memory = 100
+    total_cpu = 100
+    memory = Memory(total_memory, total_cpu)
+
+    # Simulate 10 processes with random memory, CPU requirements, and durations
+    processes = [Process(pid, random.randint(10, 30), random.randint(10, 30), random.randint(1, 5)) for pid in range(1, 11)]
+
+    for process in processes:
+        memory.load_process(process)
+        memory.display_memory_status()
+        time.sleep(1)
+        memory.decrement_durations()
+        memory.display_memory_status()
+
+simulate_memory_swapping()
